@@ -67,10 +67,10 @@ On boards that are not a K3 (six workers, 600 s each):
 | Board | Passes | Wrong results | Traps |
 |---|---|---|---|
 | Milk-V Titan | 865 million | 0 | 0 |
-| SpacemiT K1 (X60 cores), Milk-V Jupiter | 5,467 million | 0 | 0 |
+| SpacemiT M1 (X60 cores, a variant of the K1), Milk-V Jupiter | 5,467 million | 0 | 0 |
 | SpacemiT K1 (X60 cores), Banana Pi BPI-F3 | 5,808 million | 0 | 0 |
 
-So the K1, SpacemiT's previous core, does not show the fault with this program.
+So the X60, SpacemiT's previous core (K1 and M1), does not show the fault with this program.
 
 The missing bit is nearly always the 1st, 4th, 5th or 8th.
 
