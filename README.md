@@ -36,25 +36,42 @@ done so in our runs, but do not run it on a K3 you cannot power-cycle.
 
 ## Results
 
-Six workers unless noted. "Vendor" is the SpacemiT 6.18 kernel; "mainline" is a 7.3 kernel with board patches.
+Six workers for 120 s unless noted. "Vendor" is the SpacemiT 6.18 kernel under Fedora, "Bianbu" is SpacemiT's own
+distribution with its kernel; the others are mainline kernels with board patches under Fedora. All on a K3 CoM260.
 
-| Board | Kernel | Run | Passes | Wrong results |
+| Kernel | Run | Passes | Wrong results | Traps |
 |---|---|---|---|---|
-| K3 CoM260 | vendor 6.18 | 30 s | 226 million | 905 |
-| K3 CoM260 | vendor 6.18 | 30 s | 244 million | 1,175 |
-| K3 CoM260 | vendor 6.18 | 30 s, one worker | 50 million | 90 |
-| K3 CoM260 | vendor 6.18 | 30 s, `mapped` | 243 million | 0 |
-| K3 CoM260 | mainline 7.3 | 120 s | 964 million | 46 |
-| K3 CoM260 | mainline 7.3 | 120 s | 1,007 million | 12 |
-| K3 CoM260 | mainline 7.3 | 120 s, one worker | 203 million | 15 |
-| K3 CoM260 | mainline 7.3 | 120 s, `mapped` | 979 million | 0 |
-| K3 Pico-ITX | mainline 7.3 | 600 s | 4,532 million | 149 |
-| Milk-V Titan (not a K3) | mainline 7.3 | 600 s | 865 million | 0 |
+| 7.3.6 | six workers | 904 million | 558 | 0 |
+| 7.3.6 | six workers | 905 million | 496 | 0 |
+| 7.3.6 | one worker | 203 million | 1,254 | 0 |
+| 7.3.6 | `mapped` | 1,005 million | 0 | 0 |
+| 7.3.5 | six workers | 906 million | 574 | 10 |
+| 7.3.5 | six workers | 906 million | 553 | 4 |
+| 7.3.5 | one worker | 202 million | 257 | 12 |
+| 7.3.5 | `mapped` | 1,029 million | 0 | 0 |
+| 7.3.0 | six workers | 1,025 million | 582 | 589 |
+| 7.3.0 | six workers | 1,006 million | 448 | 660 |
+| 7.3.0 | one worker | 203 million | 415 | 1,002 |
+| 7.3.0 | `mapped` | 979 million | 0 | 0 |
+| vendor 6.18 | six workers, 60 s | 451 million | 229 | 224 |
+| vendor 6.18 | six workers, 60 s | 453 million | 289 | 173 |
+| vendor 6.18 | one worker, 60 s | 101 million | 207 | 471 |
+| vendor 6.18 | `mapped`, 60 s | 496 million | 0 | 0 |
+| Bianbu 6.18.3 | six workers, 60 s | 488 million | 67 | 2 |
+| Bianbu 6.18.3 | six workers, 60 s | 491 million | 118 | 3 |
+| Bianbu 6.18.3 | one worker, 60 s | 102 million | 124 | 1 |
+| Bianbu 6.18.3 | `mapped`, 60 s | 490 million | 0 | 0 |
 
-No run produced a trap. On the K3 the missing bit is nearly always the 1st, 4th, 5th or 8th.
+The missing bit is nearly always the 1st, 4th, 5th or 8th.
 
-The rate varies a lot between runs, between harts (on the Pico-ITX run: 123, 3, 14, 1, 1 and 7 on harts 0, 1, 3, 4, 5
-and 6) and between kernels, so a short clean run on a K3 proves nothing; run for several minutes.
+A "trap" is the same fault with a worse outcome: the skipped instruction was one whose absence makes the program jump
+to a wrong place. The program catches the signal, reports it and goes on with the next pass.
+
+**The rate depends on the kernel build.** An earlier version of this program (6 instead of 9 no-ops in front of the last
+far call, see "One fault, several forms") gave about 2,000 wrong results a minute on the vendor kernel, 900 on 7.3.0, 6 on
+7.3.5 and 0.1 on 7.3.6, on the same board. That version was also run on a K3 Pico-ITX (7.3.5, 600 s: 149 wrong results in
+4,532 million passes) and on a Milk-V Titan, which is not a K3 (600 s: 0 in 865 million passes). So a clean run on a K3
+proves little, and a kernel update that makes the wrong results disappear has not fixed anything.
 
 ## What the program does
 
@@ -63,7 +80,7 @@ is in `window.S`. It is a path of about 150 instructions, cut out of `rustc` and
 
 1. `part1`: call an empty function, call `F1`, call a second empty function.
 2. `part2`: a few branches, some taken and some never taken.
-3. `part3`: flush one cache line of the stack, call the empty function, call `F1` a second time, six 2-byte no-ops,
+3. `part3`: flush one cache line of the stack, call the empty function, call `F1` a second time, nine 2-byte no-ops,
    then a far call (`auipc` + `jalr`) to `far_target`, which jumps to `exit_stub`.
 4. `exit_stub`: the check.
 
@@ -112,16 +129,31 @@ The kernel does nothing unusual in these traces. The skipped instruction is the 
 
 ## One fault, several forms
 
-The number of 2-byte no-ops in front of the last far call (`NOPS2 6` in `part3`) selects what is seen:
+The number of 2-byte no-ops in front of the last far call (`NOPS2 9` in `part3`) selects what is seen. With this program
+on kernel 7.3.6, six workers, two runs of 60 s per count:
 
 | No-ops | Seen |
 |---|---|
-| 2 or 4 | the hart locks: it stops executing, takes no interrupts, and does not respond to a debugger halt request |
-| 3 or 6 | wrong results (a skipped instruction) |
-| 0, 1, 5 or 8 | traps at addresses just behind the far call, and wrong results |
+| 4 | the hart locks: it stops executing, takes no interrupts, and does not respond to a debugger halt request. This is [k3bump2](https://github.com/jasonmontleon/k3bump2) |
+| 2 | the hart locks, less often (1 of 3 runs, kernel 7.3.5) |
+| 9 | wrong results, about 280 a minute |
+| 5 or 8 | wrong results, 0 to 5 a minute, and an occasional trap |
+| 0, 1, 3, 6, 7, 10, 11, 12, 14, 16 | nothing in two minutes |
 
-These counts were measured with the RVA23 form of `F1` (the original, which copies with vector instructions). In this
-repository each of those five vector instructions is replaced by one floating-point load or store, and six no-ops give
+Which counts show something, and how often, changes with the kernel build: 6 no-ops give hundreds of wrong results a
+minute on the vendor kernel and on 7.3.0, and 3 no-ops lock the hart on the vendor kernel but not on 7.3.5.
+
+## Interrupts
+
+Both forms need interrupts, or are at least made far more frequent by them. One hart was set aside so that it takes
+about 3 interrupts a second instead of 1,000 (`nohz_full`, kernel 7.3.5), and compared with an ordinary hart:
+
+| Program | Ordinary hart | Hart with about 3 interrupts a second |
+|---|---|---|
+| wrong results (6 no-ops), 3 runs of 300 s | 30, 26, 60 | 0, 5, 5 |
+| lock-up (4 no-ops), one worker | locked within 2 s, 5 of 5 runs | 3 of 7 runs locked (within 1 s, 8 s, 27 s); 4 ran to the end (60 s, 60 s, 300 s, 300 s) |
+
+The relation is not a simple proportion: 20 times more timer interrupts on a hart (21,000 a second) did not give more
 wrong results.
 
 ## What the pass needs

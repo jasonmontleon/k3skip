@@ -93,8 +93,8 @@ part3c:
 	c.bnez s0, .+46			/* never taken */
 	c.mv a0, s4
 	FARCALL ra, stub_F1		/* lib+0x2a94156: second call of F1 */
-	NOPS2 6
-	FARCALL ra, far_target		/* lib+0x2a94166: the last call; the skipped instruction is one of the next few executed */
+	NOPS2 9				/* the number of instructions here decides the form of the failure, see README */
+	FARCALL ra, far_target		/* lib+0x2a94170: the last call; the skipped instruction is one of the next few executed */
 
 	.section .r_2a9894c, "ax"
 	.org 0x20		/* lib+0x2a9896c */
