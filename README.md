@@ -62,8 +62,15 @@ distribution with its kernel; the others are mainline kernels with board patches
 | Bianbu 6.18.3 | one worker, 60 s | 102 million | 124 | 1 |
 | Bianbu 6.18.3 | `mapped`, 60 s | 490 million | 0 | 0 |
 
-On a board that is not a K3 (Milk-V Titan, mainline 7.3 kernel, six workers, 600 s): 865 million passes, 0 wrong results,
-0 traps.
+On boards that are not a K3 (six workers, 600 s each):
+
+| Board | Passes | Wrong results | Traps |
+|---|---|---|---|
+| Milk-V Titan | 865 million | 0 | 0 |
+| SpacemiT K1 (X60 cores), Milk-V Jupiter | 5,467 million | 0 | 0 |
+| SpacemiT K1 (X60 cores), a second board | 5,808 million | 0 | 0 |
+
+So the K1, SpacemiT's previous core, does not show the fault with this program.
 
 The missing bit is nearly always the 1st, 4th, 5th or 8th.
 
