@@ -68,7 +68,7 @@ On boards that are not a K3 (six workers, 600 s each):
 |---|---|---|---|
 | Milk-V Titan | 865 million | 0 | 0 |
 | SpacemiT K1 (X60 cores), Milk-V Jupiter | 5,467 million | 0 | 0 |
-| SpacemiT K1 (X60 cores), a second board | 5,808 million | 0 | 0 |
+| SpacemiT K1 (X60 cores), Banana Pi BPI-F3 | 5,808 million | 0 | 0 |
 
 So the K1, SpacemiT's previous core, does not show the fault with this program.
 
