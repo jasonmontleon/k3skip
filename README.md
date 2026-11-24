@@ -62,6 +62,9 @@ distribution with its kernel; the others are mainline kernels with board patches
 | Bianbu 6.18.3 | one worker, 60 s | 102 million | 124 | 1 |
 | Bianbu 6.18.3 | `mapped`, 60 s | 490 million | 0 | 0 |
 
+On a board that is not a K3 (Milk-V Titan, mainline 7.3 kernel, six workers, 600 s): 865 million passes, 0 wrong results,
+0 traps.
+
 The missing bit is nearly always the 1st, 4th, 5th or 8th.
 
 A "trap" is the same fault with a worse outcome: the skipped instruction was one whose absence makes the program jump
