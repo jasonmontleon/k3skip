@@ -113,15 +113,16 @@ part1:
 	W jal zero, part2
 
 	.section .r_2aae580, "ax"
-F1:
-	c.addi16sp sp, -0xb0
+F1:					/* a0 = OBJECT.  Written by hand: what is left of a compiled function after everything that could
+					   be removed was removed.  The no-ops keep each block at its original address. */
+	c.addi16sp sp, -0xb0		/* 13 register saves */
 	c.sdsp ra, 0xa8(sp)
 	c.sdsp s0, 0xa0(sp)
 	c.sdsp s1, 0x98(sp)
 	c.sdsp s2, 0x90(sp)
 	c.sdsp s3, 0x88(sp)
 	c.sdsp s4, 0x80(sp)
-	c.sdsp s5, 0x78(sp)
+	c.sdsp s5, 0x78(sp)		/* this one and the six below it go into the stack line that part 3 flushes */
 	c.sdsp s6, 0x70(sp)
 	c.sdsp s7, 0x68(sp)
 	c.sdsp s8, 0x60(sp)
@@ -129,80 +130,66 @@ F1:
 	c.sdsp s10, 0x50(sp)
 	c.sdsp s11, 0x48(sp)
 	c.mv s0, a0
-	c.li s7, 0x1
-	W addi s3, a0, 0x98
-	c.li s8, 0x3
-	c.li s9, -0x1
-	c.ld a0, 0x98(s0)
-	c.ld a1, 0xa0(s0)
-	c.ld a2, 0x20(a0)
-	W bgeu a1, a2, .+134
-	c.ld a0, 0x18(a0)
-	W slli a2, a1, 0x5
-	c.add a0, a2
-	W lbu a2, 0x0(a0)
-	W beq a2, zero, L_2aae6d6
+	NOPS2 1
+	NOPS4 1
+	NOPS2 5
+	W bne zero, zero, .+134		/* never taken */
+	NOPS2 1
+	NOPS4 1
+	NOPS2 1
+	NOPS4 1
+	W beq zero, zero, L_2aae6d6	/* taken */
 
 	.org 0x156		/* lib+0x2aae6d6 */
 L_2aae6d6:
-	c.lw a2, 0xc(a0)
-	W lwu a3, 0x8(a0)
-	c.lw a4, 0x10(a0)
-	W lwu a5, 0x14(a0)
-	c.slli a2, 0x20
-	W lw a6, 0x18(a0)
-	c.or a2, a3
-	W lbu s4, 0x1(a0)
-	W lbu s2, 0x4(a0)
-	W lbu s6, 0x5(a0)
-	W lhu s5, 0x6(a0)
-	c.sdsp a2, 0x28(sp)
+	NOPS2 1
+	NOPS4 1
+	NOPS2 1
+	NOPS4 1
+	NOPS2 1
+	NOPS4 1
+	NOPS2 1
+	NOPS4 4
+	c.sdsp a2, 0x28(sp)		/* five stores: two to the stack, three into the object (what they store does not matter) */
 	c.swsp a4, 0x30(sp)
-	c.slli a6, 0x20
-	NOPS2 1
-	W or s1, a6, a5
+	NOPS2 2
+	NOPS4 1
 	c.sd a1, 0xa0(s0)
-	W lw a0, 0x108(s0)
-	W slli a1, s1, 0x10
-	c.lui a2, 0x10
-	NOPS2 1
-	c.srli a1, 0x30
-	c.addi a2, -0x1
+	NOPS4 2
+	NOPS2 4
 	W sw a0, 0x108(s0)
 	W sw zero, 0x10c(s0)
-	W bne a1, a2, L_2aae770
+	W jal zero, L_2aae770
 
 	.org 0x1f0		/* lib+0x2aae770 */
 L_2aae770:
-	W slli a0, a1, 0x31
-	W addiw a2, s1, 0x0
-	c.srli a0, 0x31
-	c.or a0, a2
-	c.bnez a0, L_2aae794
+	NOPS4 2
+	NOPS2 2
+	c.j L_2aae794
 
 	.org 0x214		/* lib+0x2aae794 */
 L_2aae794:
 	W addi a0, s0, 0xa8
 	NOPS4 1
-	W fld fa4, 0x0(a0)
-	c.lwsp a0, 0x28(sp)
+	W ld t5, 0x0(a0)		/* two loads: 8 bytes of the object ... */
+	NOPS2 1
 	c.addi4spn a1, sp, 0x2c
-	W fld fa3, 0x0(a1)
-	c.ld a1, 0xb8(s0)
-	W sb s2, 0xa8(s0)
+	W ld t6, 0x0(a1)		/* ... and 8 bytes of the stack, across the two stack stores above (misaligned) */
+	NOPS2 1
+	W sb s2, 0xa8(s0)		/* eleven stores into the object */
 	W sb s6, 0xa9(s0)
 	W sh s5, 0xaa(s0)
 	W sw a0, 0xac(s0)
 	W addi a0, s0, 0xb0
-	W fsd fa3, 0x0(a0)
+	W sd t6, 0x0(a0)
 	W addi a0, s0, 0xc0
 	c.sd s1, 0xb8(s0)
 	c.sd a1, 0xd0(s0)
 	W sb s4, 0x119(s0)
 	W sd zero, 0x60(s0)
 	W sd zero, 0x68(s0)
-	W fsd fa4, 0x0(a0)
-	c.ldsp ra, 0xa8(sp)
+	W sd t5, 0x0(a0)
+	c.ldsp ra, 0xa8(sp)		/* 13 register restores */
 	c.ldsp s0, 0xa0(sp)
 	c.ldsp s1, 0x98(sp)
 	c.ldsp s2, 0x90(sp)

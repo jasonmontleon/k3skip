@@ -72,6 +72,20 @@ On boards that are not a K3 (six workers, 600 s each):
 
 So the X60, SpacemiT's previous core (K1 and M1), does not show the fault with this program.
 
+The table above was measured before `F1` was replaced by the hand-written one (see "What the program does"). With the
+hand-written `F1`, 60 s runs on the same board:
+
+| Kernel | Six workers | Six workers | One worker | `mapped` |
+|---|---|---|---|---|
+| 7.3.6 (this repository's binary) | 418 | 427 | 13 | 0 |
+| 7.3.6 | 506 | 774 | 7 | 0 |
+| 7.3.5 | 912 and 96 traps | 871 | 7 and 5 traps | 0 |
+| 7.3.0 | 679 and 789 traps | 538 and 884 traps | 1 and 539 traps | 0 |
+| vendor 6.18 | 676 and 867 traps | 604 and 979 traps | 12 and 508 traps | 0 |
+
+(All rows but the first were run with the same code and the earlier, non-zero contents of `data.S`.) A single worker now
+shows far fewer wrong results than six; use the six-worker form.
+
 The missing bit is nearly always the 1st, 4th, 5th or 8th.
 
 A "trap" is the same fault with a worse outcome: the skipped instruction was one whose absence makes the program jump
@@ -112,8 +126,13 @@ exit_stub:
 `t4` is zero when the pass starts. Eight instructions in a row each set one bit. There is no branch among them, so the
 value stored must be `0xff`. The driver checks that after every pass.
 
-`F1` is a real function from `rustc` (about 95 instructions: it saves registers, copies some fields of an object, and
-returns). `data.S` holds the object it works on.
+`F1` was a function of the compiler (95 instructions on the path taken). It has been cut down, one tested step at a
+time, to what the failure needs, and is now written by hand: it saves 13 registers, passes a never-taken and a taken
+conditional branch (`bne zero, zero` and `beq zero, zero`), makes five stores, loads 8 bytes from the object and 8 bytes
+from the stack, makes eleven more stores into the object, restores the registers and returns. No-ops stand where the
+removed instructions were, so that each block is still at its original address. What the stores write and what the
+object contains make no difference; `data.S` is all zeros. How it was cut down is described in the
+[k3bump2](https://github.com/jasonmontleon/k3bump2) README, "What F1 needs".
 
 One more page matters although it is never executed: the page at `0x3ff5a1f000` is filled with no-ops and ends in the
 first half of a 4-byte conditional branch. The page after it, `0x3ff5a20000`, is not mapped. The second call of `part1`

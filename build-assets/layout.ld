@@ -1,8 +1,6 @@
 /* Where each piece of window.S and data.S sits in the address space of the running program.
    Used only at build time (build-assets/mkpages.py) to assemble the pieces for their run addresses. */
 SECTIONS {
-  .data2_array     0x3fdc2ed000 : { *(.data2_array) }
-  .data2_table     0x3fdc2ee000 : { *(.data2_table) }
   .data2_stack     0x3feb846000 : { *(.data2_stack) }
   .data2_object    0x3feb849000 : { *(.data2_object) }
   .r_3ff2ee276e    0x3ff2ee276e : { *(.r_3ff2ee276e) }
